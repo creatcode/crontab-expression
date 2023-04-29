@@ -1,6 +1,6 @@
 <?php
 
-namespace Creatcode;
+namespace Creatcode\Cronexp;
 
 use DateTime;
 

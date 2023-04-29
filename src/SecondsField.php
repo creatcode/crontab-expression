@@ -1,9 +1,9 @@
 <?php
 
-namespace Creatcode;
+namespace Creatcode\Cronexp;
 
 use DateTime;
-use Creatcode\AbstractField;
+use Creatcode\Cronexp\AbstractField;
 
 /**
  * Minutes field.  Allows: * , / -

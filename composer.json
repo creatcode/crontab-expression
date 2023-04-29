@@ -3,12 +3,13 @@
     "description": "支持秒级cron表达式的生成和校验",
     "autoload": {
         "psr-4": {
-            "Creatcode\\": "src"
+            "Creatcode\\Cronexp\\": "src"
         }
     },
     "authors": [
         {
-            "name": "creatcode"
+            "name": "creatcode",
+            "email": "872864670@qq.com"
         }
     ],
     "require": {

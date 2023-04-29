@@ -1,6 +1,6 @@
 <?php
 
-namespace Creatcode;
+namespace Creatcode\Cronexp;
 
 /**
  * Abstract CRON expression field
