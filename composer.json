@@ -3,7 +3,7 @@
     "description": "支持秒级cron表达式的生成和校验",
     "autoload": {
         "psr-4": {
-            "Secron\\": "src/Secron"
+            "Creatcode\\": "src"
         }
     },
     "authors": [
