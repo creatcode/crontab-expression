@@ -1,0 +1,18 @@
+{
+    "name": "creatcode/crontab-expression",
+    "description": "支持秒级cron表达式的生成和校验",
+    "autoload": {
+        "psr-4": {
+            "Secron\\": "src/Secron"
+        }
+    },
+    "authors": [
+        {
+            "name": "creatcode"
+        }
+    ],
+    "require": {
+        "php": "^7.2"
+    },
+    "license": "Apache-2.0"
+}
