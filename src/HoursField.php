@@ -66,6 +66,6 @@ class HoursField extends AbstractField
 
     public function validate($value)
     {
-        return (bool) preg_match('/^[\*,\/\-0-9]+$/', $value);
+        return $this->validateNumericExpression($value, 0, 23);
     }
 }

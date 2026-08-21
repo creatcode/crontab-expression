@@ -39,6 +39,15 @@ class MonthField extends AbstractField
 
     public function validate($value)
     {
-        return (bool) preg_match('/^[\*,\/\-0-9A-Z]+$/', $value);
+        $value = str_ireplace(
+            array(
+                'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
+                'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'
+            ),
+            range(1, 12),
+            $value
+        );
+
+        return $this->validateNumericExpression($value, 1, 12);
     }
 }

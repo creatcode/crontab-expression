@@ -113,61 +113,11 @@ class DayOfMonthField extends AbstractField
             return true;
         }
 
-        // If you only contain numbers and are within 1-31
-        if ((bool) preg_match('/^\d{1,2}$/', $value) && ($value >= 1 && $value <= 31)) {
-            return true;
+        // W 只能配合月份中的单个合法日期使用
+        if ((bool) preg_match('/^(\d{1,2})W$/', $value, $matches)) {
+            return $matches[1] >= 1 && $matches[1] <= 31;
         }
 
-        // If you have a -, we will deal with each of your chunks
-        if ((bool) preg_match('/-/', $value)) {
-            // We cannot have a range within a list or vice versa
-            if ((bool) preg_match('/,/', $value)) {
-                return false;
-            }
-
-            $chunks = explode('-', $value);
-            foreach ($chunks as $chunk) {
-                if (!$this->validate($chunk)) {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        // If you have a comma, we will deal with each value
-        if ((bool) preg_match('/,/', $value)) {
-            // We cannot have a range within a list or vice versa
-            if ((bool) preg_match('/-/', $value)) {
-                return false;
-            }
-
-            $chunks = explode(',', $value);
-            foreach ($chunks as $chunk) {
-                if (!$this->validate($chunk)) {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        // If you contain a /, we'll deal with it
-        if ((bool) preg_match('/\//', $value)) {
-            $chunks = explode('/', $value);
-            foreach ($chunks as $chunk) {
-                if (!$this->validate($chunk)) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        // If you end in W, make sure that it has a numeric in front of it
-        if ((bool) preg_match('/^\d{1,2}W$/', $value)) {
-            return true;
-        }
-
-        return false;
+        return $this->validateNumericExpression($value, 1, 31);
     }
 }

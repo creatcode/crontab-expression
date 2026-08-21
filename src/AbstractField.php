@@ -8,6 +8,35 @@ namespace Creatcode\Cronexp;
 abstract class AbstractField implements FieldInterface
 {
     /**
+     * 校验通用数值 Cron 字段，支持单值、列表、范围和步长。
+     *
+     * @param string $value 字段表达式
+     * @param int    $min   最小值
+     * @param int    $max   最大值
+     *
+     * @return bool
+     */
+    protected function validateNumericExpression($value, $min, $max)
+    {
+        foreach (explode(',', $value) as $expression) {
+            if (!preg_match('/^(\*|\d+)(?:-(\d+))?(?:\/(\d+))?$/', $expression, $matches)) {
+                return false;
+            }
+
+            $start = $matches[1];
+            $end = isset($matches[2]) && $matches[2] !== '' ? $matches[2] : null;
+            $step = isset($matches[3]) && $matches[3] !== '' ? $matches[3] : null;
+            if (($start !== '*' && ($start < $min || $start > $max)) ||
+                ($end !== null && ($end < $min || $end > $max || $start === '*' || $start > $end)) ||
+                ($step !== null && $step < 1)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Check to see if a field is satisfied by a value
      *
      * @param string $dateValue Date value to check

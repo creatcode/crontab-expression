@@ -15,9 +15,8 @@ use RuntimeException;
  * The determinations made by this class are accurate if checked run once per
  * minute (seconds are dropped from date time comparisons).
  *
- * Schedule parts must map to:
- * minute [0-59], hour [0-23], day of month, month [1-12|JAN-DEC], day of week
- * [1-7|MON-SUN], and an optional year.
+     * Schedule parts support Unix five-part expressions and six-part expressions
+     * with seconds. A seventh year part is optional.
  *
  * @link http://en.wikipedia.org/wiki/Cron
  */
@@ -35,6 +34,11 @@ class CronExpression
      * @var array CRON expression parts
      */
     private $cronParts;
+
+    /**
+     * @var bool 是否使用 Unix 五段表达式
+     */
+    private $isUnixExpression = false;
 
     /**
      * @var FieldFactory CRON field factory
@@ -128,10 +132,24 @@ class CronExpression
     public function setExpression($value)
     {
         $this->cronParts = preg_split('/\s/', $value, -1, PREG_SPLIT_NO_EMPTY);
-        if (count($this->cronParts) < 6) {
+        $partCount = count($this->cronParts);
+        if ($partCount < 5 || $partCount > 7) {
             throw new InvalidArgumentException(
                 $value . ' is not a valid CRON expression'
             );
+        }
+
+        $this->isUnixExpression = $partCount === 5;
+
+        if ($this->isUnixExpression && ($this->cronParts[2] === '?' || $this->cronParts[4] === '?')) {
+            throw new InvalidArgumentException(
+                $value . ' is not a valid Unix CRON expression'
+            );
+        }
+
+        // Unix 五段格式不含秒，统一补零后复用秒级调度逻辑。
+        if ($partCount === 5) {
+            array_unshift($this->cronParts, '0');
         }
 
         foreach ($this->cronParts as $position => $part) {
@@ -353,9 +371,13 @@ class CronExpression
         // We don't have to satisfy * or null fields
         $parts = array();
         $fields = array();
+        $dayPart = $this->getExpression(self::DAY);
+        $weekdayPart = $this->getExpression(self::WEEKDAY);
+        $useUnixDayOrWeekday = $this->isUnixExpression && $dayPart !== '*' && $weekdayPart !== '*';
         foreach (self::$order as $position) {
             $part = $this->getExpression($position);
-            if (null === $part || '*' === $part) {
+            if (null === $part || '*' === $part ||
+                ($useUnixDayOrWeekday && ($position === self::DAY || $position === self::WEEKDAY))) {
                 continue;
             }
             $parts[$position] = $part;
@@ -365,25 +387,18 @@ class CronExpression
         // Set a hard limit to bail on an impossible date
         for ($i = 0; $i < $this->maxIterationCount; $i++) {
 
-            foreach ($parts as $position => $part) {
-                $satisfied = false;
-                // Get the field object used to validate this part
-                $field = $fields[$position];
-                // Check if this is singular or a list
-                if (strpos($part, ',') === false) {
-                    $satisfied = $field->isSatisfiedBy($nextRun, $part);
-                } else {
-                    foreach (array_map('trim', explode(',', $part)) as $listPart) {
-                        if ($field->isSatisfiedBy($nextRun, $listPart)) {
-                            $satisfied = true;
-                            break;
-                        }
-                    }
-                }
+            // Unix Cron 在日期和星期均受限时，任一字段匹配即可执行。
+            if ($useUnixDayOrWeekday &&
+                !$this->isPartSatisfied($nextRun, self::DAY, $dayPart) &&
+                !$this->isPartSatisfied($nextRun, self::WEEKDAY, $weekdayPart)) {
+                $this->fieldFactory->getField(self::DAY)->increment($nextRun, $invert);
+                continue;
+            }
 
+            foreach ($parts as $position => $part) {
                 // If the field is not satisfied, then start over
-                if (!$satisfied) {
-                    $field->increment($nextRun, $invert, $part);
+                if (!$this->isPartSatisfied($nextRun, $position, $part)) {
+                    $fields[$position]->increment($nextRun, $invert, $part);
                     continue 2;
                 }
             }
@@ -400,5 +415,26 @@ class CronExpression
         // @codeCoverageIgnoreStart
         throw new RuntimeException('Impossible CRON expression');
         // @codeCoverageIgnoreEnd
+    }
+
+    /**
+     * 判断指定字段是否匹配当前时间，兼容列表表达式。
+     *
+     * @param DateTime $date     待判断时间
+     * @param int      $position 字段位置
+     * @param string   $part     字段表达式
+     *
+     * @return bool
+     */
+    protected function isPartSatisfied(DateTime $date, $position, $part)
+    {
+        $field = $this->fieldFactory->getField($position);
+        foreach (array_map('trim', explode(',', $part)) as $listPart) {
+            if ($field->isSatisfiedBy($date, $listPart)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
