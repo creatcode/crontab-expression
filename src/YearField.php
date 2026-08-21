@@ -32,6 +32,6 @@ class YearField extends AbstractField
 
     public function validate($value)
     {
-        return $this->validateNumericExpression($value, 1970, 2099);
+        return $this->validateNumericExpression($value, 1970, 9999);
     }
 }

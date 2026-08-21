@@ -20,6 +20,7 @@ $validExpressions = array(
     '0 0 10 ? * 5#3',
     '0 0 0 1 JAN *',
     '0 0 0 1 1 * 2027',
+    '0 0 0 1 1 * 9999',
     '@daily'
 );
 $invalidExpressions = array(
@@ -28,7 +29,7 @@ $invalidExpressions = array(
     '0 0 0 32 * *',
     '0 0 0 * 13 *',
     '0 0 0 * * 8',
-    '0 0 0 * * * 2100',
+    '0 0 0 * * * 10000',
     '*/0 * * * * *',
     '0 0 ? * MON',
     '0 0 0 99W * *',
