@@ -5,13 +5,13 @@ namespace Creatcode\Cronexp;
 use DateTime;
 
 /**
- * Month field.  Allows: * , / -
+ * 月字段，支持：*、,、/、-。
  */
 class MonthField extends AbstractField
 {
     public function isSatisfiedBy(DateTime $date, $value)
     {
-        // Convert text month values to integers
+        // 将月份缩写转换为数值。
         $value = str_ireplace(
             array(
                 'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',

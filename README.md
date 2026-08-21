@@ -24,6 +24,41 @@ $cron = CronExpression::factory('*/5 * * * *');
 $nextRun = $cron->getNextRunDate();
 ```
 
+### 语义化生成 Cron
+
+只需调用一个方法：`CronExpression::generate(单位, 间隔, 选项)`，直接返回 Cron 字符串。默认生成六段表达式；如需计算执行时间，再将结果传给 `factory()`。
+
+```php
+use Creatcode\Cronexp\CronExpression;
+
+// 每 5 分钟的第 10 秒执行
+$expression = CronExpression::generate('minute', 5, array('second' => 10));
+$nextRun = CronExpression::factory($expression)->getNextRunDate();
+```
+
+支持的单位为 `second`、`minute`、`hour`、`day`、`week`、`month`。前四种单位的第二个参数表示间隔；`week` 和 `month` 的间隔固定为 `1`，因为标准 Cron 无法精确表示“每 N 周”或“每 N 月”。
+
+`$options` 按需传入：`second`（0-59）、`minute`（0-59）、`hour`（0-23）、`weekday`（0-7）和 `day`（1-31）。可通过 `format` 指定输出格式：`5`、`6` 或 `7`；设置 `year` 时会自动生成七段表达式。
+
+```php
+// 五段：*/5 * * * *
+$fivePart = CronExpression::generate('minute', 5, array('format' => 5));
+
+// 七段：0 */5 * * * ? 2027
+$sevenPart = CronExpression::generate('minute', 5, array('year' => 2027));
+```
+
+五段格式没有秒字段，因此不能用于 `second` 调度。五段表达式会按 Unix 语义处理日期与星期字段。
+
+例如，每周一 09:00 执行：
+
+```php
+$expression = CronExpression::generate('week', 1, array(
+    'weekday' => 1,
+    'hour' => 9
+));
+```
+
 执行回归测试：`composer test`。
 
 ### Cron表达式详解

@@ -6,7 +6,7 @@ use DateTimeZone;
 
 
 /**
- * Hours field.  Allows: * , / -
+ * 时字段，支持：*、,、/、-。
  */
 class HoursField extends AbstractField
 {

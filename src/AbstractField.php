@@ -3,7 +3,7 @@
 namespace Creatcode\Cronexp;
 
 /**
- * Abstract CRON expression field
+ * Cron 表达式字段抽象基类。
  */
 abstract class AbstractField implements FieldInterface
 {
@@ -37,10 +37,10 @@ abstract class AbstractField implements FieldInterface
     }
 
     /**
-     * Check to see if a field is satisfied by a value
+     * 判断字段值是否满足表达式。
      *
-     * @param string $dateValue Date value to check
-     * @param string $value     Value to test
+     * @param string $dateValue 待判断的日期字段值
+     * @param string $value     Cron 字段表达式
      *
      * @return bool
      */
@@ -56,9 +56,9 @@ abstract class AbstractField implements FieldInterface
     }
 
     /**
-     * Check if a value is a range
+     * 判断字段表达式是否为范围。
      *
-     * @param string $value Value to test
+     * @param string $value 字段表达式
      *
      * @return bool
      */
@@ -68,9 +68,9 @@ abstract class AbstractField implements FieldInterface
     }
 
     /**
-     * Check if a value is an increments of ranges
+     * 判断字段表达式是否包含步长。
      *
-     * @param string $value Value to test
+     * @param string $value 字段表达式
      *
      * @return bool
      */
@@ -80,10 +80,10 @@ abstract class AbstractField implements FieldInterface
     }
 
     /**
-     * Test if a value is within a range
+     * 判断字段值是否位于指定范围内。
      *
-     * @param string $dateValue Set date value
-     * @param string $value     Value to test
+     * @param string $dateValue 待判断的日期字段值
+     * @param string $value     范围表达式
      *
      * @return bool
      */
@@ -95,10 +95,10 @@ abstract class AbstractField implements FieldInterface
     }
 
     /**
-     * Test if a value is within an increments of ranges (offset[-to]/step size)
+     * 判断字段值是否满足步长范围表达式（起点[-终点]/步长）。
      *
-     * @param string $dateValue Set date value
-     * @param string $value     Value to test
+     * @param string $dateValue 待判断的日期字段值
+     * @param string $value     步长范围表达式
      *
      * @return bool
      */
@@ -118,7 +118,7 @@ abstract class AbstractField implements FieldInterface
         $range = explode('-', $parts[0], 2);
         $offset = $range[0];
         $to = isset($range[1]) ? $range[1] : $dateValue;
-        // Ensure that the date value is within the range
+        // 先确认日期字段值位于指定范围内，避免无效匹配。
         if ($dateValue < $offset || $dateValue > $to) {
             return false;
         }
@@ -137,10 +137,10 @@ abstract class AbstractField implements FieldInterface
     }
 
     /**
-     * Returns a range of values for the given cron expression
+     * 根据 Cron 字段表达式展开为数值列表。
      *
-     * @param string $expression The expression to evaluate
-     * @param int $max           Maximum offset for range
+     * @param string $expression 待展开的字段表达式
+     * @param int    $max        范围允许的最大值
      *
      * @return array
      */

@@ -6,7 +6,7 @@ use DateTime;
 use Creatcode\Cronexp\AbstractField;
 
 /**
- * Minutes field.  Allows: * , / -
+ * 秒字段，支持：*、,、/、-。
  *
  * @author Michael Dowling <mtdowling@gmail.com>
  */

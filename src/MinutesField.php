@@ -6,7 +6,7 @@ use DateTime;
 
 
 /**
- * Minutes field.  Allows: * , / -
+ * 分字段，支持：*、,、/、-。
  */
 class MinutesField extends AbstractField
 {

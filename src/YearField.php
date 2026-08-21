@@ -6,7 +6,7 @@ use DateTime;
 
 
 /**
- * Year field.  Allows: * , / -
+ * 年字段，支持：*、,、/、-。
  */
 class YearField extends AbstractField
 {

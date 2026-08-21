@@ -6,24 +6,24 @@ namespace Creatcode\Cronexp;
 use InvalidArgumentException;
 
 /**
- * CRON field factory implementing a flyweight factory
+ * Cron 字段享元工厂。
  * @link http://en.wikipedia.org/wiki/Cron
- * 增加秒的判断
+ * 支持秒字段的创建。
  */
 class FieldFactory
 {
     /**
-     * @var array Cache of instantiated fields
+     * @var array 已创建字段对象的缓存
      */
     private $fields = array();
 
     /**
-     * Get an instance of a field object for a cron expression position
+     * 根据 Cron 字段位置获取对应的字段对象。
      *
-     * @param int $position CRON expression position value to retrieve
+     * @param int $position Cron 字段位置
      *
      * @return FieldInterface
-     * @throws InvalidArgumentException if a position is not valid
+     * @throws InvalidArgumentException 字段位置无效时抛出
      */
     public function getField($position)
     {

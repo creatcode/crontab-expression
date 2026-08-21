@@ -5,33 +5,26 @@ namespace Creatcode\Cronexp;
 use DateTime;
 
 /**
- * Day of month field.  Allows: * , / - ? L W
+ * 月内日期字段，支持：*、,、/、-、?、L、W。
  *
- * 'L' stands for "last" and specifies the last day of the month.
+ * L 表示每月最后一天。
  *
- * The 'W' character is used to specify the weekday (Monday-Friday) nearest the
- * given day. As an example, if you were to specify "15W" as the value for the
- * day-of-month field, the meaning is: "the nearest weekday to the 15th of the
- * month". So if the 15th is a Saturday, the trigger will fire on Friday the
- * 14th. If the 15th is a Sunday, the trigger will fire on Monday the 16th. If
- * the 15th is a Tuesday, then it will fire on Tuesday the 15th. However if you
- * specify "1W" as the value for day-of-month, and the 1st is a Saturday, the
- * trigger will fire on Monday the 3rd, as it will not 'jump' over the boundary
- * of a month's days. The 'W' character can only be specified when the
- * day-of-month is a single day, not a range or list of days.
+ * W 表示指定日期最近的工作日（周一至周五）。例如 15W：15 日为周六时在 14 日
+ * 执行，为周日时在 16 日执行，为工作日时在 15 日执行。1W 在 1 日为周六时会在
+ * 当月 3 日执行，不会跨月寻找工作日。W 只能与单个日期组合，不能用于范围或列表。
  *
  * @author Michael Dowling <mtdowling@gmail.com>
  */
 class DayOfMonthField extends AbstractField
 {
     /**
-     * Get the nearest day of the week for a given day in a month
+     * 获取指定月内日期最近的工作日。
      *
-     * @param int $currentYear  Current year
-     * @param int $currentMonth Current month
-     * @param int $targetDay    Target day of the month
+     * @param int $currentYear  年份
+     * @param int $currentMonth 月份
+     * @param int $targetDay    月内目标日期
      *
-     * @return \DateTime Returns the nearest date
+     * @return \DateTime 最近的工作日日期
      */
     private static function getNearestWeekday($currentYear, $currentMonth, $targetDay)
     {
@@ -58,23 +51,23 @@ class DayOfMonthField extends AbstractField
 
     public function isSatisfiedBy(DateTime $date, $value)
     {
-        // ? states that the field value is to be skipped
+        // ? 表示忽略月内日期字段的限制。
         if ($value == '?') {
             return true;
         }
 
         $fieldValue = $date->format('d');
 
-        // Check to see if this is the last day of the month
+        // 判断是否为每月最后一天。
         if ($value == 'L') {
             return $fieldValue == $date->format('t');
         }
 
-        // Check to see if this is the nearest weekday to a particular value
+        // 判断是否为指定日期最近的工作日。
         if (strpos($value, 'W')) {
-            // Parse the target day
+            // 提取 W 前的目标日期。
             $targetDay = substr($value, 0, strpos($value, 'W'));
-            // Find out if the current day is the nearest day of the week
+            // 比较当前日期是否为最近的工作日。
             return $date->format('j') == self::getNearestWeekday(
                 $date->format('Y'),
                 $date->format('m'),
@@ -99,16 +92,17 @@ class DayOfMonthField extends AbstractField
     }
 
     /**
-     * Validates that the value is valid for the Day of the Month field
-     * Days of the month can contain values of 1-31, *, L, or ? by default. This can be augmented with lists via a ',',
-     * ranges via a '-', or with a '[0-9]W' to specify the closest weekday.
+     * 校验月内日期字段表达式是否合法。
+     *
+     * 默认支持 1-31、*、L、?；支持用 , 表示列表、用 - 表示范围，以及用 [0-9]W
+     * 表示最近的工作日。
      *
      * @param string $value
      * @return bool
      */
     public function validate($value)
     {
-        // Allow wildcards and a single L
+        // 允许通配符、忽略符和单个 L。
         if ($value === '?' || $value === '*' || $value === 'L') {
             return true;
         }

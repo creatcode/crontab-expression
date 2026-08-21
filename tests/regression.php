@@ -66,6 +66,52 @@ if (!CronExpression::factory('*/10 * * * * *')->isDue('2026-08-21 08:07:10', 'As
     $failures[] = '秒级 isDue() 判断错误';
 }
 
+$schedules = array(
+    array('second', 10, array(), '*/10 * * * * ?'),
+    array('minute', 5, array('second' => 10), '10 */5 * * * ?'),
+    array('minute', 5, array('year' => 2027), '0 */5 * * * ? 2027'),
+    array('hour', 3, array('minute' => 15), '0 15 */3 * * ?'),
+    array('day', 2, array('hour' => 8), '0 0 8 */2 * ?'),
+    array('week', 1, array('weekday' => 1, 'hour' => 9), '0 0 9 ? * 1'),
+    array('month', 1, array('day' => 15, 'hour' => 9), '0 0 9 15 * ?')
+);
+
+foreach ($schedules as $schedule) {
+    $expression = CronExpression::generate($schedule[0], $schedule[1], $schedule[2]);
+    if ($expression !== $schedule[3]) {
+        $failures[] = '语义化调度生成错误：' . $expression;
+    }
+    if (!CronExpression::isValidExpression($expression)) {
+        $failures[] = '语义化调度生成了无效表达式：' . $expression;
+    }
+}
+
+$fivePartExpression = CronExpression::generate('minute', 5, array('format' => 5));
+if ($fivePartExpression !== '*/5 * * * *') {
+    $failures[] = '五段调度生成错误：' . $fivePartExpression;
+}
+if (!CronExpression::isValidExpression($fivePartExpression)) {
+    $failures[] = '五段调度生成了无效表达式：' . $fivePartExpression;
+}
+
+try {
+    CronExpression::generate('minute', 0);
+    $failures[] = '应拒绝无效的调度间隔';
+} catch (InvalidArgumentException $e) {
+}
+
+try {
+    CronExpression::generate('week', 2);
+    $failures[] = '应拒绝无法精确表达的周间隔';
+} catch (InvalidArgumentException $e) {
+}
+
+try {
+    CronExpression::generate('second', 10, array('format' => 5));
+    $failures[] = '应拒绝使用五段格式的秒级调度';
+} catch (InvalidArgumentException $e) {
+}
+
 if ($failures) {
     fwrite(STDERR, implode(PHP_EOL, $failures) . PHP_EOL);
     exit(1);

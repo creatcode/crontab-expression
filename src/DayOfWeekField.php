@@ -7,17 +7,14 @@ use InvalidArgumentException;
 
 
 /**
- * Day of week field.  Allows: * / , - ? L #
+ * 星期字段，支持：*、/、,、-、?、L、#。
  *
- * Days of the week can be represented as a number 0-7 (0|7 = Sunday)
- * or as a three letter string: SUN, MON, TUE, WED, THU, FRI, SAT.
+ * 星期可用 0-7 表示，其中 0 和 7 均表示星期日；也可使用 SUN、MON、TUE、WED、
+ * THU、FRI、SAT 等三字母缩写。
  *
- * 'L' stands for "last". It allows you to specify constructs such as
- * "the last Friday" of a given month.
+ * L 表示最后一次，可用于指定“每月最后一个星期五”等规则。
  *
- * '#' is allowed for the day-of-week field, and must be followed by a
- * number between one and five. It allows you to specify constructs such as
- * "the second Friday" of a given month.
+ * # 后必须为 1-5，可用于指定“每月第二个星期五”等规则。
  */
 class DayOfWeekField extends AbstractField
 {
@@ -27,14 +24,14 @@ class DayOfWeekField extends AbstractField
             return true;
         }
 
-        // Convert text day of the week values to integers
+        // 将星期缩写转换为数值。
         $value = $this->convertLiterals($value);
 
         $currentYear = $date->format('Y');
         $currentMonth = $date->format('m');
         $lastDayOfMonth = $date->format('t');
 
-        // Find out if this is the last specific weekday of the month
+        // 判断是否为当月最后一个指定星期。
         if (strpos($value, 'L')) {
             $weekday = str_replace('7', '0', substr($value, 0, strpos($value, 'L')));
             $tdate = clone $date;
@@ -49,7 +46,7 @@ class DayOfWeekField extends AbstractField
             return $date->format('j') == $lastDayOfMonth;
         }
 
-        // Handle # hash tokens
+        // 处理 # 规则。
         if (strpos($value, '#')) {
             list($weekday, $nth) = explode('#', $value);
 
@@ -58,14 +55,14 @@ class DayOfWeekField extends AbstractField
                 $weekday = 7;
             }
 
-            // Validate the hash fields
+            // 校验 # 规则中的星期和序号。
             if ($weekday < 0 || $weekday > 7) {
                 throw new InvalidArgumentException("Weekday must be a value between 0 and 7. {$weekday} given");
             }
             if ($nth > 5) {
                 throw new InvalidArgumentException('There are never more than 5 of a given weekday in a month');
             }
-            // The current weekday must match the targeted weekday to proceed
+            // 当前星期必须与目标星期一致。
             if ($date->format('N') != $weekday) {
                 return false;
             }
@@ -86,7 +83,7 @@ class DayOfWeekField extends AbstractField
             return $date->format('j') == $currentDay;
         }
 
-        // Handle day of the week values
+        // 处理星期范围表达式。
         if (strpos($value, '-')) {
             $parts = explode('-', $value);
             if ($parts[0] == '7') {
@@ -97,7 +94,7 @@ class DayOfWeekField extends AbstractField
             $value = implode('-', $parts);
         }
 
-        // Test to see which Sunday to use -- 0 == 7 == Sunday
+        // 根据表达式确定以 0 还是 7 表示星期日。
         $format = in_array(7, str_split($value)) ? 'N' : 'w';
         $fieldValue = $date->format($format);
 
