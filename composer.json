@@ -1,6 +1,6 @@
 {
     "name": "creatcode/crontab-expression",
-    "description": "支持秒级cron表达式的生成和校验",
+    "description": "通用 Unix/Linux Cron 表达式的解析、校验与秒级扩展",
     "autoload": {
         "psr-4": {
             "Creatcode\\Cronexp\\": "src"

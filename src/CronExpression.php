@@ -12,7 +12,7 @@ use RuntimeException;
 /**
  * Cron 表达式的解析、校验与执行时间计算器。
  *
- * 支持 Unix 五段表达式、包含秒字段的六段表达式，以及包含年份字段的七段表达式。
+ * 支持 Unix 五段表达式，以及在 Unix 语义基础上增加秒字段的六段表达式。
  * 可计算指定基准时间后的下一次或上一次执行时间，并判断指定时刻是否命中表达式。
  *
  * @link http://en.wikipedia.org/wiki/Cron
@@ -25,17 +25,11 @@ class CronExpression
     const DAY     = 3;
     const MONTH   = 4;
     const WEEKDAY = 5;
-    const YEAR    = 6;
 
     /**
      * @var array 规范化后的 Cron 字段列表
      */
     private $cronParts;
-
-    /**
-     * @var bool 是否使用 Unix 五段表达式
-     */
-    private $isUnixExpression = false;
 
     /**
      * @var FieldFactory Cron 字段对象工厂
@@ -50,7 +44,7 @@ class CronExpression
     /**
      * @var array Cron 字段的匹配顺序，按高位字段优先。
      */
-    private static $order = array(self::YEAR, self::MONTH, self::DAY, self::WEEKDAY, self::HOUR, self::MINUTE, self::SECOND);
+    private static $order = array(self::MONTH, self::DAY, self::WEEKDAY, self::HOUR, self::MINUTE, self::SECOND);
 
     /**
      * 根据 Cron 表达式创建解析对象。
@@ -129,17 +123,9 @@ class CronExpression
     {
         $this->cronParts = preg_split('/\s/', $value, -1, PREG_SPLIT_NO_EMPTY);
         $partCount = count($this->cronParts);
-        if ($partCount < 5 || $partCount > 7) {
+        if ($partCount !== 5 && $partCount !== 6) {
             throw new InvalidArgumentException(
                 $value . ' is not a valid CRON expression'
-            );
-        }
-
-        $this->isUnixExpression = $partCount === 5;
-
-        if ($this->isUnixExpression && ($this->cronParts[2] === '?' || $this->cronParts[4] === '?')) {
-            throw new InvalidArgumentException(
-                $value . ' is not a valid Unix CRON expression'
             );
         }
 
@@ -356,7 +342,8 @@ class CronExpression
         $fields = array();
         $dayPart = $this->getExpression(self::DAY);
         $weekdayPart = $this->getExpression(self::WEEKDAY);
-        $useUnixDayOrWeekday = $this->isUnixExpression && $dayPart !== '*' && $weekdayPart !== '*';
+        // 六段格式仅扩展秒字段，日期与星期仍沿用 Linux Cron 的 OR 语义。
+        $useUnixDayOrWeekday = $dayPart !== '*' && $weekdayPart !== '*';
         foreach (self::$order as $position) {
             $part = $this->getExpression($position);
             if (null === $part || '*' === $part ||
@@ -429,9 +416,8 @@ class CronExpression
      * 因为标准 Cron 无法精确表达每 N 周或每 N 月。
      *
      * $options 支持以下条件：second（0-59）、minute（0-59）、hour（0-23）、
-     * weekday（0-7，仅 week）、day（1-31，仅 month）、format（5、6、7）和 year。
-     * 未指定 format 时默认生成六段表达式；指定 year 时默认生成七段表达式。五段
-     * 表达式不包含秒字段，因此不支持 second 单位。
+     * weekday（0-7，仅 week）、day（1-31，仅 month）和 format（5、6）。未指定
+     * format 时默认生成六段表达式。五段表达式不包含秒字段，因此不支持 second 单位。
      *
      * @param string $unit     调度单位
      * @param int    $interval 执行间隔
@@ -446,7 +432,7 @@ class CronExpression
     }
 
     /**
-     * 将语义化调度参数转换为五段、六段或七段 Cron 表达式。
+     * 将语义化调度参数转换为五段或六段 Cron 表达式。
      *
      * @param string $unit     调度单位
      * @param int    $interval 执行间隔
@@ -464,7 +450,7 @@ class CronExpression
         $hour = self::getScheduleOption($options, 'hour', 0, 0, 23);
         $day = '*';
         $month = '*';
-        $weekday = '?';
+        $weekday = '*';
 
         switch ($unit) {
             case 'second':
@@ -488,7 +474,6 @@ class CronExpression
 
             case 'week':
                 self::validateScheduleInterval($interval, 1);
-                $day = '?';
                 $weekday = self::getScheduleOption($options, 'weekday', 0, 0, 7);
                 break;
 
@@ -498,7 +483,7 @@ class CronExpression
                 break;
         }
 
-        return self::formatScheduleExpression($format, $second, $minute, $hour, $day, $month, $weekday, $options);
+        return self::formatScheduleExpression($format, $second, $minute, $hour, $day, $month, $weekday);
     }
 
     /**
@@ -507,19 +492,17 @@ class CronExpression
      * @param array $options 调度选项
      *
      * @return int
-     * @throws InvalidArgumentException 当格式与 year 参数冲突时抛出
+     * @throws InvalidArgumentException 当格式不为五段或六段时抛出
      */
     private static function getScheduleFormat(array $options)
     {
-        $format = array_key_exists('format', $options)
-            ? self::validateScheduleValue($options['format'], 'format', 5, 7)
-            : (array_key_exists('year', $options) ? 7 : 6);
-
-        if ($format != 7 && array_key_exists('year', $options)) {
-            throw new InvalidArgumentException('year is only supported by seven-part Cron expressions');
+        if (array_key_exists('year', $options)) {
+            throw new InvalidArgumentException('year is not supported by Linux-style Cron expressions');
         }
 
-        return $format;
+        return array_key_exists('format', $options)
+            ? self::validateScheduleValue($options['format'], 'format', 5, 6)
+            : 6;
     }
 
     /**
@@ -532,27 +515,21 @@ class CronExpression
      * @param string $day     日字段
      * @param string $month   月字段
      * @param string $weekday 星期字段
-     * @param array  $options 调度选项
      *
      * @return string
      * @throws InvalidArgumentException 当五段格式包含秒级调度时抛出
      */
-    private static function formatScheduleExpression($format, $second, $minute, $hour, $day, $month, $weekday, array $options)
+    private static function formatScheduleExpression($format, $second, $minute, $hour, $day, $month, $weekday)
     {
         if ($format == 5) {
             if ($second !== 0) {
                 throw new InvalidArgumentException('Five-part Cron expressions do not support second-level schedules');
             }
 
-            return $minute . ' ' . $hour . ' ' . str_replace('?', '*', $day) . ' ' . $month . ' ' . str_replace('?', '*', $weekday);
+            return $minute . ' ' . $hour . ' ' . $day . ' ' . $month . ' ' . $weekday;
         }
 
-        $expression = $second . ' ' . $minute . ' ' . $hour . ' ' . $day . ' ' . $month . ' ' . $weekday;
-        if ($format == 7) {
-            $expression .= ' ' . (array_key_exists('year', $options) ? $options['year'] : '*');
-        }
-
-        return $expression;
+        return $second . ' ' . $minute . ' ' . $hour . ' ' . $day . ' ' . $month . ' ' . $weekday;
     }
 
     /**
