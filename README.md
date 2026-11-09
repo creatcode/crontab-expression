@@ -1,6 +1,8 @@
 # crontab-expression
 通用 PHP Cron 表达式库，提供表达式解析、校验、执行时间计算与语义化生成能力，并在 Unix/Linux 五段格式基础上提供可选秒字段。
 
+支持 PHP 7.2+。
+
 支持以下格式：
 
 - `分 时 日 月 周`：Unix/Linux Cron，内部按秒为 `0` 执行。
